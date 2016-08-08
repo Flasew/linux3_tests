@@ -10,8 +10,10 @@
 
 MODULE_LICENSE("Dual BSD/GPL");
 
+#define IRQNUMBER 40
+
 void test(void* args){
-	printk(KERN_INFO "hello from a workqueue\n");
+	printk(KERN_ALERT "[wq] workqueue ran\n");
 }
 
 static DECLARE_WORK(ws, test);
@@ -22,28 +24,32 @@ irq_handler_t isr(unsigned int irq, void *dev_id, struct pt_regs *regs) {
 	return (irq_handler_t) IRQ_HANDLED;
 }
 
+static int ok;
+
 static int __init wq_init(void) {
 
-	free_irq(16,NULL);
+	/*free_irq(IRQNUMBER,NULL);*/
 
-	request_irq(16,
+	ok = request_irq(IRQNUMBER,
 		(irq_handler_t) isr,
-		IRQF_TRIGGER_RISING,
+		0x2080,
 		"wq_test",
-		NULL);
+		IRQF_NO_SUSPEND);
 
 	wq = create_workqueue("wq");
 
-	printk(KERN_INFO "wq registered\n");
+	printk(KERN_ALERT "[wq] request_irq: %d| create_workqueue: %d", ok,wq);
+
+	printk(KERN_ALERT "[wq] registered\n");
 
 	return 0;
 }
 
 static void __exit wq_exit(void) {
-	free_irq(16,NULL);
+	free_irq(IRQNUMBER,NULL);
 	flush_workqueue(wq);
 	destroy_workqueue(wq);
-	printk(KERN_INFO "wq unregistered\n");
+	printk(KERN_ALERT "[wq] unregistered\n");
 }
 
 module_init(wq_init);
