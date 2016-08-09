@@ -1,0 +1,10 @@
+obj-m := full.o
+
+PWD := `pwd`
+KDIR := /lib/modules/`uname -r`/build
+
+all:
+	make -C $(KDIR) M=$(PWD) modules
+
+clean:
+	make -C $(KDIR) M=$(PWD) clean
