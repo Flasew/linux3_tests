@@ -9,6 +9,8 @@
 
 #include <linux/fcntl.h>
 
+#include <linux/ktime.h>
+
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -55,29 +57,21 @@ int file_sync(struct file* file) {
 void file_test(void){
 
 	struct file* f;
-	unsigned int size;
-	unsigned long long offset;
-	unsigned char* data;
-	char * fname;
+	ktime_t kt;
 
-	int flags;
-	int mode;
+	int i;
 
-	fname = "vfs_test.out";
-	data =  "Hello, world!";
+	f = file_open("vfs_test.out", O_WRONLY | O_CREAT, S_IRWXO);
 
-	flags = O_WRONLY | O_CREAT;
-	mode = S_IRWXO;
+	for(i=0;i<10;i++) {
+		kt = ktime_get();
+		file_write(f, 8*i, (unsigned char *) &kt, 8);
+		file_sync(f);
+	}
 
-	offset = 0;
-	size = 13;
-
-	f = file_open(fname, flags, mode);
-
-	file_write(f, offset, data, size);
+	file_write(f, 8, "\n", 1);
 
 	file_close(f);
-
 }
 
 static int __init vfs_init(void) {

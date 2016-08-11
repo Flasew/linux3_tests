@@ -14,7 +14,7 @@
 #include <linux/sched.h>
 #include <linux/workqueue.h>
 
-#define IRQNUMBER 40
+#define IRQNUMBER 1
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -92,7 +92,7 @@ static int __init full_init(void) {
 
 	ok = request_irq(IRQNUMBER,
 		(irq_handler_t) isr,
-		0x2080, /* IRQF_SHARED | IRQF_ONESHOT */
+		0x0080, /* 0x2080 IRQF_SHARED | IRQF_ONESHOT */
 		"full_test",
 		IRQF_NO_SUSPEND);
 
@@ -108,9 +108,10 @@ static int __init full_init(void) {
 }
 
 static void __exit full_exit(void) {
-	flush_workqueue(wq);
-	destroy_workqueue(wq);
-	file_close(f);
+	/*flush_workqueue(wq);*/
+	/*destroy_workqueue(wq);*/
+	/*file_close(f);*/
+	free_irq(IRQNUMBER,(void*)"full_test");
 	printk(KERN_ALERT "[full] unregistered\n");
 }
 

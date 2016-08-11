@@ -7,10 +7,15 @@
 #include <linux/sched.h>
 #include <linux/workqueue.h>
 
+#include <linux/ktime.h>
 
 MODULE_LICENSE("Dual BSD/GPL");
 
 #define IRQNUMBER 40
+
+
+
+
 
 void test(void* args){
 	printk(KERN_ALERT "[wq] workqueue ran\n");
@@ -32,13 +37,13 @@ static int __init wq_init(void) {
 
 	ok = request_irq(IRQNUMBER,
 		(irq_handler_t) isr,
-		0x2080,
+		0x2080, /* IRQF_SHARED | IRQF_ONESHOT */
 		"wq_test",
 		IRQF_NO_SUSPEND);
 
 	wq = create_workqueue("wq");
 
-	printk(KERN_ALERT "[wq] request_irq: %d| create_workqueue: %d", ok,wq);
+	printk(KERN_ALERT "[wq] request_irq: %d | create_workqueue: %d", ok,wq);
 
 	printk(KERN_ALERT "[wq] registered\n");
 
@@ -46,7 +51,7 @@ static int __init wq_init(void) {
 }
 
 static void __exit wq_exit(void) {
-	free_irq(IRQNUMBER,NULL);
+	/*free_irq(IRQNUMBER,NULL);*/
 	flush_workqueue(wq);
 	destroy_workqueue(wq);
 	printk(KERN_ALERT "[wq] unregistered\n");
