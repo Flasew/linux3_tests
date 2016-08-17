@@ -1,4 +1,4 @@
-obj-m := full2.o
+obj-m := vfs_wq.o
 full2-objs := ./src/full2.o ./src/vfs.o
 
 PWD := `pwd`

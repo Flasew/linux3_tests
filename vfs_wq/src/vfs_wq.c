@@ -12,7 +12,7 @@
 #include "vfs.h"
 
 
-#define IRQNUMBER 1
+#define IRQNUMBER 19
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -27,7 +27,7 @@ struct driver_state {
 
 static struct driver_state state = {
 	.irq_count = 0,
-	.dev_id = "full2_test"
+	.dev_id = "vfswq_test"
 };
 
 void test(struct work_struct* work){
@@ -51,34 +51,34 @@ irq_handler_t isr(unsigned int irq, void *dev_id, struct pt_regs *regs) {
 	return (irq_handler_t) IRQ_HANDLED;
 }
 
-static int __init full2_init(void) {
+static int __init vfswq_init(void) {
 
 	int ok;
 
 	ok = request_irq(IRQNUMBER,
 		(irq_handler_t) isr,
 		0x0080, /* 0x2080 IRQF_SHARED | IRQF_ONESHOT */
-		"full2",
+		"vfswq",
 		(void*)state.dev_id);
 
 	INIT_WORK(&state.ws, test);
 
 	state.wq = create_workqueue("wq");
-	state.f = file_open("full2_test.out", O_WRONLY | O_CREAT, S_IRWXO);
+	state.f = file_open("vfswq_test.out", O_WRONLY | O_CREAT, S_IRWXO);
 
-	printk(KERN_ALERT "[full] request_irq: %d | create_workqueue: %pB", ok,state.wq);
-	printk(KERN_ALERT "[full] registered\n");
+	printk(KERN_ALERT "[vfswq] request_irq: %d | create_workqueue: %pB", ok,state.wq);
+	printk(KERN_ALERT "[vfswq] registered\n");
 
 	return 0;
 }
 
-static void __exit full2_exit(void) {
+static void __exit vfswq_exit(void) {
 	flush_workqueue(state.wq);
 	destroy_workqueue(state.wq);
 	file_close(state.f);
 	free_irq(IRQNUMBER,(void*) state.dev_id);
-	printk(KERN_ALERT "[full] unregistered\n");
+	printk(KERN_ALERT "[vfswq] unregistered\n");
 }
 
-module_init(full2_init);
-module_exit(full2_exit);
+module_init(vfswq_init);
+module_exit(vfswq_exit);
