@@ -1,5 +1,5 @@
 obj-m := vfs_wq.o
-full2-objs := ./src/full2.o ./src/vfs.o
+vfs_wq-objs := ./src/vfs.o
 
 PWD := `pwd`
 KDIR := /lib/modules/`uname -r`/build
