@@ -1,7 +1,7 @@
 #! /usr/bin/python
 from os import listdir
 import subprocess
-import sys
+from optparse import OptionParser
 
 max_major = 1<<11
 
@@ -18,15 +18,25 @@ def unused_majors():
 			unused.append(i)
 	return unused
 			
-def launch(m,irq):
-		
-	cmd = 'insmod char.ko major=%i irq=%i' % (m,irq)
+def launch(m,irq,irqflags,target_dev):
+	
+	m = int(m)
+	irq = int(irq)
+	irqflags=int(irqflags)
+
+	cmd = 'insmod char.ko major=%i irq=%i irqflags=%i target_dev=%s' % (m,irq,irqflags,target_dev);
 	print cmd
 	subprocess.call(cmd,shell=True)
 
 if __name__ == '__main__':
+
+	parser = OptionParser()
+	parser.add_option('--irq',dest='irq', default='0')
+	parser.add_option('--irqflags',dest='irqflags', default=0x0080)
+	parser.add_option('--dev',dest='target_dev', default='/dev/null')
 	
-	irq = int(sys.argv[1])
+	o,r = parser.parse_args()
+	
 	m = unused_majors()[0]
-	launch(m,irq)
+	launch(m, o.irq, o.irqflags, o.target_dev)
 	
