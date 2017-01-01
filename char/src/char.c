@@ -1,45 +1,19 @@
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-
-#include <linux/module.h>
-
-#include <linux/fs.h>
-#include <linux/kdev_t.h>
-
-#include <linux/cdev.h> 
+#include "char.h"
 
 MODULE_LICENSE("Dual BSD/GPL");
 
-static char* target_dev;
-static char* name;
-static int irq = 0;
-static int irqflags = 0x0080;
-static int major = 0;
 
-static int minor = 0;
-static dev_t dev;
-static struct cdev * cdev;
-
-module_param(irq, int, 0644);
-module_param(irqflags, int, 0644);
-module_param(major, int, 0644);
-module_param(name, charp, 0644);
-module_param(target_dev, charp, 0644);
 
 static int __init char_init(void) {
 
-	dev = MKDEV(major,minor);
-	cdev_init
-
-	if (!register_chrdev_region(dev,1,name)){
-		printk(KERN_ALERT "[char] could not register character device");
-	}
-
-
-
-
-
+	devno = MKDEV(major,minor);
+	cdev = cdev_alloc();
+	cdev_init(cdev,&f_ops);
+	cdev_add(cdev,devno,1);
+	register_chrdev_region(devno,1,name);
+	
+	mutex_init(&lock);
+	
 	printk(KERN_ALERT "[char] irq = %d, target=%s\n", irq, target_dev);
 
 	return 0;
@@ -47,10 +21,37 @@ static int __init char_init(void) {
 
 static void __exit char_exit(void) {
 
-	unregister_chrdev_region(dev,1);
+	unregister_chrdev_region(devno,1);
+	cdev_del(cdev);
+	
+	mutex_destroy(&lock);
 
 	printk(KERN_ALERT "[char] unregistered\n");
 }
+
+static ssize_t dev_write(struct file *filep, const char *buffer, size_t len, loff_t *offset){
+	
+	return 0;
+}
+
+static int dev_release(struct inode *inodep, struct file *filep) {
+	
+	mutex_unlock(&lock);
+	
+	
+	return 0;
+	
+}
+
+static int dev_open(struct inode *inodep, struct file *filep) {
+
+	if(!mutex_trylock(&lock)) {return -EBUSY;}
+
+
+	return 0;
+	
+}
+
 
 module_init(char_init);
 module_exit(char_exit);
