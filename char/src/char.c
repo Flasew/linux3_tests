@@ -37,6 +37,7 @@ static int __init char_init(void) {
 
 	mutex_init(&state.lock);
 	state.irqcount = 0;
+	state.success_count = 0;
 		
 	printk(KERN_ALERT "[char] irq = %d, target=%s\n",
 		irq,
@@ -69,11 +70,11 @@ static ssize_t driver_write(struct file *filep,
 	if(!mutex_trylock(&lock)) {return -EBUSY;}
 	
 	
-	/* TODO: figure out if we should really flush here */
+	/* block until the last msg_dispatch() returns */
 	flush_workqueue(state.workqueue);	
 	
-	state.msg_len = len; /* isr will reset this to zero */
-	strncpy(state.msg,buffer,256);
+	state.msg_len = len;
+	strncpy(state.msg,buffer,MAX_MSG_LEN);
 	
 	wait_event_interruptible_timeout(state.waitqueue,
 		msg.sent != 0,
@@ -111,6 +112,7 @@ irq_handler_t isr(unsigned int irq,
 	struct pt_regs *regs){
 		
 	state.sent = 0;
+	state.irqcount++;
 		
 	if (state.msg_len) {
 		
@@ -122,8 +124,6 @@ irq_handler_t isr(unsigned int irq,
 		
 	}
 	
-	state.msg_len = 0;
-	
 	wake_up_interruptible(state.waitqueue);
 	
 	return (irq_handler_t) IRQ_HANDLED;
@@ -132,7 +132,6 @@ irq_handler_t isr(unsigned int irq,
 
 void msg_dispatch(struct work_struct work){
 	
-	
 		/* TODO: What happens if this call hangs at all? */
 	
 		state.sent = file_write(state.f,0,
@@ -140,7 +139,6 @@ void msg_dispatch(struct work_struct work){
 			(unisgned int)state.msg_len);
 			
 		file_sync(state.f);
-		
 		
 }
 

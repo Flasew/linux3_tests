@@ -34,7 +34,6 @@ int file_write(struct file* file, unsigned long long offset, unsigned char* data
 }
 
 int file_sync(struct file* file) {
-    vfs_fsync(file, 0);
-    return 0;
+    return vfs_fsync(file, 0);
 }
 

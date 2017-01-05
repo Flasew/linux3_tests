@@ -18,6 +18,23 @@
 
 #include "vfs.h"
 
+
+#define MAX_MSG_LEN 256
+#define LOG_LEN 512
+
+/* TODO: implement a read function that gives an array
+ * of event_records to userspace */
+
+struct event_record {
+	
+	int irqno; /* count identifier for interrupt cycle */
+	ktime_t t_user; /* time at call to driver_write */
+	ktime_t t_irq; /* time at interrupt */
+	ktime_t t_flush; /* time at completed write to target */
+	int bytes_sent;
+}
+
+
 /* Neither of these structs are intended to be dynamically
  * initializable. They're just meant as namespaces to organize
  * an unwieldy number of globals. */
@@ -45,7 +62,7 @@ struct driver_params {
 
 struct driver_state {
 	
-	int irqcount;
+	int irqcount; /* count isr calls */
 		
 	struct file* f; /* destination for vfs write */
 	
@@ -56,7 +73,7 @@ struct driver_state {
 	
 	struct mutex lock; /* prevent multiple processes from using driver */
 	
-	char msg[256]; 
+	char msg[MAX_MSG_LEN]; 
 	int msg_len;
 	
 	int sent; /* number of bytes sent on last vfs write */
@@ -68,7 +85,8 @@ int driver_release(struct inode *, struct file *);
 
 /* Latch a value to send to the target on the next interrupt cycle.
  * No value is sent on the next interrupt if not called.
- * Returns the number of bytes written on the LAST cycle.*/
+ * Returns the number of bytes written on the LAST cycle.
+ * Blocks until previous vfs writes have completed. */
 
 ssize_t driver_write(struct file *,
 	const char *,
@@ -103,11 +121,11 @@ static struct driver_params params = {
 static struct driver_state state ;
 
 
-module_param(params.irq, uint, 0644);
-module_param(params.irqflags, int, 0644);
-module_param(params.major, int, 0644);
-module_param(params.timeout_msec, int, 0644);
-module_param(params.delay_msec, ulong, 0644);
-module_param(params.delay_usec, ulong, 0644);
-module_param(params.driver_name, charp, 0644);
-module_param(params.target_path, charp, 0644);
+module_param_named(irq,params.irq, uint, 0644);
+module_param_named(irqflags,params.irqflags, int, 0644);
+module_param_named(major,params.major, int, 0644);
+module_param_named(timeout_msec,params.timeout_msec, int, 0644);
+module_param_named(delay_msec,params.delay_msec, ulong, 0644);
+module_param_named(delay_usec,params.delay_usec, ulong, 0644);
+module_param_named(driver_name,params.driver_name, charp, 0644);
+module_param_named(target_path,params.target_path, charp, 0644);

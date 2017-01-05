@@ -18,13 +18,24 @@ def unused_majors():
 			unused.append(i)
 	return unused
 			
-def launch(m,irq,irqflags,target_dev,name):
+def launch(major,
+		irq,
+		irqflags,
+		target_path,
+		driver_name,
+		timeout_msec,
+		delay_msec,
+		delay_usec):
 	
-	m = int(m)
+	major = int(major)
 	irq = int(irq)
-	irqflags=int(irqflags)
+	irqflags = int(irqflags)
+	
+	
+	cmd = 'insmod char.ko'
+	cmd += ' major=%i irq=%i irqflags=%i target_path=%s driver_name=%s' % (major,irq,irqflags,target_dev,driver_name)
+	cmd += 'timeout_msec=%i delay_msec=%i delay_usec=%i' %(timeout_msec,delay_msec,delay_usec)
 
-	cmd = 'insmod char.ko major=%i irq=%i irqflags=%i target_dev=%s name=%s' % (m,irq,irqflags,target_dev,name);
 	print cmd
 	subprocess.call(cmd,shell=True)
 
