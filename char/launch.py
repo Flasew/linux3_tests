@@ -33,7 +33,7 @@ def launch(major,
 	
 	
 	cmd = 'insmod char.ko'
-	cmd += ' major=%i irq=%i irqflags=%i target_path=%s driver_name=%s' % (major,irq,irqflags,target_dev,driver_name)
+	cmd += ' major=%i irq=%i irqflags=%i target_path=%s driver_name=%s' % (major,irq,irqflags,target_path,driver_name)
 	cmd += 'timeout_msec=%i delay_msec=%i delay_usec=%i' %(timeout_msec,delay_msec,delay_usec)
 
 	print cmd
@@ -46,9 +46,17 @@ if __name__ == '__main__':
 	parser.add_option('--irqflags',dest='irqflags', default=0x0080)
 	parser.add_option('--dev',dest='target_dev', default='/dev/null')
 	parser.add_option('--name',dest='name',default='acb')
-	
+	parser.add_option('--delay_usec',dest='delay_usec',default=0)
+	parser.add_option('--delay_msec',dest='delay_msec',default=0)
+	parser.add_option('--timeout_msec',dest='timeout_msec',default=0)
+
 	o,r = parser.parse_args()
 	
 	m = unused_majors()[0]
-	launch(m, o.irq, o.irqflags, o.target_dev,o,name)
+	launch(m, o.irq, o.irqflags,
+			o.target_dev,
+			o.name,
+			o.timeout_msec,
+			o.delay_msec,
+			o.delay_usec)
 	
