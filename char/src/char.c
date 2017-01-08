@@ -38,9 +38,10 @@ static int __init char_init(void) {
 	mutex_init(&state.lock);
 	state.irqcount = 0;
 			
-	printk(KERN_ALERT "[char] irq = %d, target=%s\n",
+	printk(KERN_ALERT "[char] irq = %d, target=%s, major=%i\n",
 		params.irqno,
-		params.target_path);
+		params.target_path,
+		params.major);
 
 	return 0;
 }
@@ -56,7 +57,7 @@ static void __exit char_exit(void) {
 	destroy_workqueue(state.workqueue);
 	
 	file_close(state.f);
-	free_irq(params.irqno, (void *) params.driver_name);
+	free_irq(params.irqno, (void *) &params);
 
 	printk(KERN_ALERT "[char] unregistered\n");
 }
@@ -64,20 +65,26 @@ static void __exit char_exit(void) {
 static ssize_t driver_write(struct file *filep,
 	const char *buffer,
 	size_t len,
-	loff_t *offset){
-	
-	if(!mutex_trylock(&state.lock)) {return -EBUSY;}
-	
+	loff_t *offset){	
 	
 	/* block until the last msg_dispatch() returns */
+	
+	printk(KERN_ALERT "[char] write\n");
+
 	flush_workqueue(state.workqueue);	
+	
+	printk(KERN_ALERT "[char] write: flushed workqueue\n");
 	
 	state.msg_len = len;
 	strncpy(state.msg,buffer,MAX_MSG_LEN);
 	
+	printk(KERN_ALERT "[char] write: sleep\n");
+	
 	wait_event_interruptible_timeout(state.waitqueue,
 		state.sent != 0,
 		params.timeout_jiffies);
+		
+	printk(KERN_ALERT "[char] write: wake\n");
 	
 	return state.sent;
 }
@@ -87,7 +94,12 @@ static int driver_release(struct inode *inodep, struct file *filep) {
 	state.msg_len = 0;
 	state.sent = 0;
 	
+	flush_workqueue(state.workqueue);
+
 	mutex_unlock(&state.lock);
+	
+	printk(KERN_ALERT "[char] close\n");
+
 	
 	return 0;
 	
@@ -99,6 +111,9 @@ static int driver_open(struct inode *inodep, struct file *filep) {
 	
 	state.msg_len = 0;
 	state.sent = 0;
+
+
+	printk(KERN_ALERT "[char] open\n");
 
 	return 0;
 	
@@ -112,6 +127,9 @@ irq_handler_t isr(unsigned int irq,
 		
 	state.sent = 0;
 	state.irqcount++;
+	
+	printk(KERN_ALERT "[char] isr\n");
+	
 		
 	if (state.msg_len) {
 		
@@ -123,13 +141,19 @@ irq_handler_t isr(unsigned int irq,
 		
 	}
 	
+	
+	
 	wake_up_interruptible(&state.waitqueue);
+	
+	printk(KERN_ALERT "[char] isr: woke user\n");
 	
 	return (irq_handler_t) IRQ_HANDLED;
 	
 }
 
 void msg_dispatch(struct work_struct * work){
+	
+		printk(KERN_ALERT "[char] dispatch\n");
 	
 		/* TODO: What happens if this call hangs at all? */
 	
@@ -138,6 +162,10 @@ void msg_dispatch(struct work_struct * work){
 			(unsigned int)state.msg_len);
 			
 		file_sync(state.f);
+		
+		state.msg_len = 0;
+		
+		printk(KERN_ALERT "[char] dispatch: filesync\n");
 		
 }
 
