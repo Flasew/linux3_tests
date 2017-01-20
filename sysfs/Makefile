@@ -1,4 +1,4 @@
-obj-m := char.o
+obj-m := chardrv.o
 
 PWD := `pwd`
 KDIR := /lib/modules/`uname -r`/build

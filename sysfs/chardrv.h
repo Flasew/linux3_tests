@@ -35,5 +35,6 @@ static ssize_t some_attr_show(struct device * dev, struct device_attribute * att
 static ssize_t some_attr_store(struct device * dev, struct device_attribute * attr, const char * buf, size_t count);
 
 
+/* somehow, this still requires root to chmod the sysfs entry for write access */
+DEVICE_ATTR(some_attr, S_IRWXU | S_IRWXG | S_IRGRP | S_IWGRP , some_attr_show, some_attr_store);
 
-DEVICE_ATTR(some_attr, S_IRWXU | S_IRWXG , some_attr_show, some_attr_store);

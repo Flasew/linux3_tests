@@ -1,4 +1,4 @@
-#include "char.h"
+#include "chardrv.h"
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -13,8 +13,8 @@ static int __init char_init(void) {
 	cdev_init(&cdev, &fops);
 	cdev_add(&cdev, devno,1);
 	
-	sysfs_class = class_create(THIS_MODULE,"ctestchar");
-	sysfs_device = device_create(sysfs_class,NULL,devno,NULL,"testchar");
+	sysfs_class = class_create(THIS_MODULE,"chardrv");
+	sysfs_device = device_create(sysfs_class,NULL,devno,NULL,"chardrv");
 	device_create_file(sysfs_device,&dev_attr_some_attr);
 	
 	
