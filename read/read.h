@@ -1,3 +1,6 @@
+#ifndef __READ__
+#define __READ__
+
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
@@ -13,6 +16,7 @@
 #include <linux/workqueue.h>
 #include <linux/vmalloc.h>
 
+#include <asm/atomic.h>
 
 static int driver_open(struct inode *inodep, struct file *filep);
 static int driver_release(struct inode *inodep, struct file *filep);
@@ -32,8 +36,10 @@ static struct file_operations fops = {
 };
 
 
-unsigned int interrupt_line;
-int interrupt_flags;
+static unsigned int interrupt_line;
+static int interrupt_flags;
 
 module_param_named(irq,interrupt_line, uint, 0644);
 module_param_named(irqflags,interrupt_flags, int, 0644);
+
+#endif

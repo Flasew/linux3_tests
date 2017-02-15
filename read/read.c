@@ -1,7 +1,8 @@
 #include "read.h"
+
 MODULE_LICENSE("Dual BSD/GPL");
 
-static int irqcount;
+atomic_t irqcount = ATOMIC_INIT(0);
 
 dev_t devno;
 struct cdev cdev;
@@ -17,7 +18,12 @@ struct class * sysfs_class;
 struct device * sysfs_device;
 
 /* somehow, this still requires root to chmod the sysfs entry for write access */
-DEVICE_ATTR(some_attr, S_IRWXU | S_IRWXG | S_IRGRP | S_IWGRP , some_attr_show, some_attr_store);
+DEVICE_ATTR(some_attr, S_IRWXU |
+	S_IRWXG |
+	S_IRGRP |
+	S_IWGRP ,
+	some_attr_show,
+	some_attr_store);
 
 
 static int driver_open(struct inode *inodep, struct file *filep){
